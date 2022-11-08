@@ -1,3 +1,13 @@
+
+// Your First C++ Program
+
+#include <iostream>
+
+int main() {
+    std::cout << "Hello World!";
+    return 0;
+}
+
 <?php
 require APPPATH . 'libraries/REST_Controller.php';
 class test_conflict_file extends REST_Controller {
@@ -430,3 +440,4 @@ class test_conflict_file extends REST_Controller {
         }
     }  
 }
+
