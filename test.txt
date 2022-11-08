@@ -1,7 +1,451 @@
+
 // Your First Program
 
 class HelloWorld {
     public static void main(String[] args) {
         System.out.println("Hello, World!"); 
     }
+}
+
+
+// Your First C++ Program
+
+#include <iostream>
+
+int main() {
+    std::cout << "Hello World!";
+    return 0;
+}
+
+<?php
+require APPPATH . 'libraries/REST_Controller.php';
+class test_conflict_file extends REST_Controller {
+    
+    //*global variable
+    public $shop_info;
+
+    public function __construct(){
+        parent::__construct();
+
+         //*getting the subdomain
+         $shop_subdomain = base_url();
+         //*validating the domain
+         $validate_domain = $this->Main_model->check_domain($shop_subdomain);
+         //*getting the domain info
+         foreach($validate_domain as $domain){
+            $this->shop_info = array(
+                'shop_id' => $domain['shop_id'], 
+                'schema_id' => $domain['schema_id'], 
+                'user_id' => $domain['user_id'],
+            );
+         }
+    }
+    
+    public function check_session(){		
+        if($this->session->userdata('is_login') == 0){
+            $this->session->sess_destroy();
+            redirect(base_url("login"));
+        }
+    }
+
+    /**
+     * index_get
+     * 
+     **Get All Data from this method.
+     * 
+     *? Testing using GET Method
+     *? Calling all blog page
+     ** base_url/blog
+     *? Calling specific blog page
+     ** base_url/blog?blog_id=20
+     * 
+     * @param blog_id
+     * @return Response
+    */
+	public function index_get()
+	{    
+        $this->check_session();
+        $params = $_REQUEST;
+        if(isset($params['blog_id'])){
+            $blog_id = $params['blog_id'];
+            //ANCHOR Get by id
+            $data = $this->Blogs->blog_get($blog_id);
+            if(count($data) > 0){
+                $this->response($data, REST_Controller::HTTP_OK);
+            }else{
+                $this->response(["Missing required parameter blog_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not blog_id found.
+            }
+        }else{
+            $blog_id = null;
+            //ANCHOR Get all
+            $data = $this->Blogs->blog_get( $blog_id);
+            $this->response($data, REST_Controller::HTTP_OK);
+        }
+	}
+      
+    /**
+     * index_post
+     * 
+     ** Add New Data from this method.
+     * 
+     *? Testing using POST Method
+     ** base_url/blog
+     * todo: Pass data using this parameters
+     * @param page_name
+     * @param description
+     * @param visibility
+     * 
+     * @return Response
+    */
+    public function index_post()
+    {
+        $this->check_session();
+        $store_id = $this->shop_info['shop_id'];
+        //* converting page_name to url friendly text.
+        //? see detail more details on Blogs model.
+        $slug_blog = $this->Blogs->seoURL($this->input->post('page_name',true));
+
+        //*getting the subdomain
+        $shop_subdomain = base_url();
+        //*validating the domain
+        $validate_domain = $this->Main_model->check_domain($shop_subdomain);
+        //*getting the domain info
+        foreach($validate_domain as $domain){
+           $this->shop_info = array(
+               'shop_id' => $domain['shop_id'], 
+               'schema_id' => $domain['schema_id'], 
+               'user_id' => $domain['user_id'],
+           );
+        }
+     }
+    public function check_session(){		
+        if($this->session->userdata('is_login') == 0){
+            $this->session->sess_destroy();
+            redirect(base_url());
+        }
+    }    
+
+
+    public function theme_get()
+	{
+        //$this->check_session();
+        $params = $_REQUEST;
+        if(isset($params['theme_id'])){
+            $theme_id = $params['theme_id'];
+            //ANCHOR Get by id
+            $data = $this->Themes->theme_get($theme_id);
+            if(count($data) > 0){
+                $this->response($data, REST_Controller::HTTP_OK);
+            }else{
+                $this->response(["Missing required parameter theme_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not upsell_id found.
+            }
+        }else{
+            $theme_id = null;
+            //ANCHOR Get all
+            $data = $this->Themes->theme_get($theme_id);
+            $this->response($data, REST_Controller::HTTP_OK);
+        }
+	}
+
+    public function theme_post()
+    {
+        //$this->check_session();
+        $store_id = $this->shop_info['shop_id'];
+        //* converting page_name to url friendly text.
+        //? see detail more details on Blogs model.
+        $theme_slug = $this->Blogs->seoURL($this->input->post('theme_name',true));
+        //* Get all @param
+        $input = $this->input->post();
+        $input ['schema_id'] = $this->shop_info['schema_id'];
+        $input ['store_id'] = $store_id;
+        $input ['slug'] = $slug_blog;
+        $input ['facebook_slug'] = $slug_blog;
+        $input ['google_slug'] = $slug_blog;
+      
+        if (!file_exists('assets/saved-files/blog/store/'.$store_id.'/'.$slug_blog)) {
+            //* making DIR folders
+            mkdir('assets/saved-files/blog/store/'.$store_id.'/'.$slug_blog, 0777, true);
+            mkdir('assets/saved-files/blog/store/'.$store_id.'/'.$slug_blog.'/front', 0777, true);
+
+            mkdir('assets/saved-files/facebook_page/store/'.$store_id.'/'.$slug_blog, 0777, true);
+            mkdir('assets/saved-files/facebook_page/store/'.$store_id.'/'.$slug_blog.'/front', 0777, true);     
+
+            mkdir('assets/saved-files/google_page/store/'.$store_id.'/'.$slug_blog, 0777, true);
+            mkdir('assets/saved-files/google_page/store/'.$store_id.'/'.$slug_blog.'/front', 0777, true);        
+
+            //* blog new file
+            $layout = fopen("assets/saved-files/blog/store/".$store_id."/".$slug_blog."/".$slug_blog.".php", "w") or die("Unable to open file!");
+            $layout = fopen("assets/saved-files/blog/store/".$store_id."/".$slug_blog."/front/".$slug_blog.".php", "w") or die("Unable to open file!");
+
+            $layout_google = fopen("assets/saved-files/google_page/store/".$store_id."/".$slug_blog."/".$slug_blog.".php", "w") or die("Unable to open file!");
+            $layout_google = fopen("assets/saved-files/google_page/store/".$store_id."/".$slug_blog."/front/".$slug_blog.".php", "w") or die("Unable to open file!");
+
+
+            $layout_facebook = fopen("assets/saved-files/facebook_page/store/".$store_id."/".$slug_blog."/".$slug_blog.".php", "w") or die("Unable to open file!");
+            $layout_facebook = fopen("assets/saved-files/facebook_page/store/".$store_id."/".$slug_blog."/front/".$slug_blog.".php", "w") or die("Unable to open file!");
+            //* default template content
+            $layout_content = "";
+            fwrite($layout, $layout_content);//saving template content to the blog new file
+            fwrite($layout_google, $layout_content);//saving template content to the blog new file
+            fwrite($layout_facebook, $layout_content);//saving template content to the blog new file
+
+            //ANCHOR Save
+            $this->Blogs->blog_post($input); 
+           	
+            $this->response(['Blog page created successfully.'], REST_Controller::HTTP_OK);
+        }else{
+            $this->response(['Blog page already exsist.'], REST_Controller::HTTP_BAD_REQUEST);//!alert if folder is already exsisted.
+        }
+ 
+    } 
+     
+    /**
+     * index_put
+     * 
+     ** Update Data from this method.
+     *
+     *? Testing using PUT Method
+     ** base_url/blog
+     * todo: Pass data using this parameters on json
+     **   {
+     **   "page_name":    "test 2",
+     **   "description" : "Diaz",
+     **   "visibility" :  "0"
+     **   }
+     *
+     * @return Response
+    */
+    public function index_put()
+    {
+        //  $this->check_session();
+        $params = $_REQUEST;
+        if(isset($params['blog_id'])){
+            $blog_id = $_GET['blog_id'];
+
+            $store_id = $this->shop_info['shop_id'];
+            $input = $this->put();
+            //? see detail more details on Blogs model.
+            $slug_blog = $this->Blogs->seoURL($this->put('page_name',true));
+
+            $blogs = $this->Blogs->blog_get($blog_id); 
+            foreach ($blogs as $blog){   
+
+                if (!file_exists('assets/saved-files/blog/store/'.$store_id.'/'.$slug_blog)) {
+                    //* making DIR folders
+                    mkdir('assets/saved-files/blog/store/'.$store_id.'/'.$slug_blog, 0777, true);
+                    mkdir('assets/saved-files/blog/store/'.$store_id.'/'.$slug_blog.'/front', 0777, true);
+                    //* blog new file
+                    $layout = fopen("assets/saved-files/blog/store/".$store_id."/".$slug_blog."/".$slug_blog.".php", "w") or die("Unable to open file!");
+                    $layout_front = fopen("assets/saved-files/blog/store/".$store_id."/".$slug_blog."/front/".$slug_blog.".php", "w") or die("Unable to open file!");
+                    //* getting previous page content
+                    $layout_content = file_get_contents("assets/saved-files/blog/store/".$store_id."/".$blog->slug."/".$blog->slug.".php");
+                    fwrite($layout, $layout_content);//saving template content to the blog new file
+                    fwrite($layout_front, $layout_content);//saving template content to the blog new file
+                    //* converting page_name to url friendly text.
+                    //? see detail more details on Blogs model.
+                    $input['slug'] = $this->Blogs->seoURL($this->put('slug',true));
+                    //*log for updating
+                    $input ['user_modified'] = $this->shop_info['user_id'];
+                    $input ['date_modified'] = date("y-m-d H:i:s");
+                    
+                    //deleting the unused file
+                    delete_files('assets/saved-files/blog/store/'.$blog->store_id.'/'.$blog->slug.'/', TRUE);
+                    rmdir('assets/saved-files/blog/store/'.$blog->store_id.'/'.$blog->slug.'/');
+
+                    //ANCHOR Update
+                    $this->Blogs->blog_put($input,$blog_id);  
+                       
+                    $this->response(['Blog page updated successfully.'], REST_Controller::HTTP_OK);
+                }else{
+                    //* converting page_name to url friendly text.
+                    //? see detail more details on Blogs model.
+                    $input['slug'] = $this->Blogs->seoURL($this->put('slug',true));
+                    //*log for updating
+                    $input ['user_modified'] = $this->shop_info['user_id'];
+                    $input ['date_modified'] = date("y-m-d H:i:s");
+                    //ANCHOR Update
+                    $this->Blogs->blog_put($input,$blog_id);  
+                    $this->response(['Blog page updated successfully.'], REST_Controller::HTTP_OK);
+                }
+
+            }
+        }else{
+            $this->response(["Missing required parameter blog_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not blog_id is not set.
+        }
+    }
+     
+    /**
+     * Delete Data from this method.
+     *
+     *? Testing using DELETE Method
+     *? Calling specific blog page
+     ** base_url/blog?blog_id=20
+     *
+     * @param blog_id
+     * @return Response
+    */
+    public function index_delete()
+    {
+        $this->check_session();
+        $params = $_REQUEST;
+        if(isset($params['blog_id'])){
+            $blog_id = $_GET['blog_id'];
+            //* Checking if the blog_id is listed
+            $blogs = $this->Blogs->blog_get($blog_id); 
+            if(count($blogs) > 0){
+                //* Deleting files and folder
+                foreach ($blogs as $blog){   
+                    delete_files('assets/saved-files/blog/store/'.$blog->store_id.'/'.$blog->slug.'/', TRUE);
+                    rmdir('assets/saved-files/blog/store/'.$blog->store_id.'/'.$blog->slug.'/');
+                }
+                //ANCHOR Delete
+                $this->Blogs->blog_delete($blog_id);    
+  
+                $this->response(['Blog page deleted successfully.'], REST_Controller::HTTP_OK);
+            }else {
+                $this->response(["Missing required parameter blog_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not blog_id found on the database.
+            }
+        }
+        else{
+            $this->response(["Missing required parameter blog_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not blog_id is not set.
+        }
+    }
+
+    public function duplicate_blog_get(){
+        $params = $_REQUEST;
+        $store_id = $this->shop_info['shop_id'];
+
+        if(isset($params['blog_id'])){
+            $blog_id = $params['blog_id'];
+            //ANCHOR Get by id
+            $data = $this->Blogs->blog_get($blog_id);
+            if(count($data) > 0){
+                foreach ($data as $blog){
+                    //for duplicating function to add number for the blog 
+                    $blog_counters = $this->Blogs->duplicating_blog($blog->page_name); 
+                    foreach ($blog_counters as $blog_counter){
+                        //duplicated values
+                        $input ['schema_id'] = $this->shop_info['schema_id'];
+                        $input ['store_id'] = $store_id;
+                        $input ['page_name'] = $blog->page_name.'-copy'.$blog_counter->counter;
+                        $input ['slug'] = $blog->slug.'-copy'.$blog_counter->counter;
+                        $input ['description'] = $blog->description;
+                        $input ['visibility'] = $blog->visibility;
+                        //ANCHOR Save
+                        $this->Blogs->blog_post($input); 
+
+                        //folder names
+                        $old_blog_folder = $blog->page_name;
+                        $new_blog_folder = $blog->page_name.'-copy'.$blog_counter->counter;
+                        //making new DIR folder
+                        mkdir('assets/saved-files/blog/store/'. $store_id.'/'.$new_blog_folder, 0777, true); 
+                        mkdir('assets/saved-files/blog/store/'. $store_id.'/'.$new_blog_folder.'/front', 0777, true); 
+
+                        //get new file on new duplicated upsell to save
+                        $blog_file = fopen("assets/saved-files/blog/store/".$store_id."/".$new_blog_folder."/".$new_blog_folder.".php", "w") or die("Unable to open file!");
+                        $blog_file_2 = fopen("assets/saved-files/blog/store/".$store_id."/".$new_blog_folder."/front/".$new_blog_folder.".php", "w") or die("Unable to open file!");
+
+                        //get date file on upsell select to duplicate
+                        $blog_content = file_get_contents("assets/saved-files/blog/store/".$store_id."/".$old_blog_folder."/".$old_blog_folder.".php");
+                        $blog_content_2 = file_get_contents("assets/saved-files/blog/store/".$store_id."/".$old_blog_folder."/front/".$old_blog_folder.".php");
+
+                        /**
+                        * fwrite
+                        * 
+                        **Add new page script based on the pre exsisting page selected
+                        *
+                        * @param blog_file //name and path were the viewing script save 
+                        * @param blog_content // page content
+                        */
+                        fwrite($blog_file, $blog_content);
+                        fwrite($blog_file_2, $blog_content_2);
+
+                        $this->response(["Blog page has been duplicated"], REST_Controller::HTTP_OK);
+                    }
+                }
+            }else{
+                $this->response(["Missing required parameter blog_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not blog_id found.
+            }
+        }else{
+            $this->response(["Missing required parameter blog_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not blog_id is not set.
+        }
+    
+
+        $input ['theme_slug'] = $theme_slug;
+      
+       
+        
+        if (!file_exists('assets/saved-files/theme/store/'.$store_id.'/'.$theme_slug)) {
+            //* making DIR folders
+            mkdir('assets/saved-files/theme/store/'.$store_id.'/'.$theme_slug, 0777, true);
+            mkdir('assets/saved-files/theme/store/'.$store_id.'/'.$theme_slug.'/front', 0777, true);
+
+           
+            //* blog new file
+            $layout = fopen("assets/saved-files/theme/store/".$store_id."/".$theme_slug."/".$theme_slug.".php", "w") or die("Unable to open file!");
+            $layout = fopen("assets/saved-files/theme/store/".$store_id."/".$theme_slug."/front/".$theme_slug.".php", "w") or die("Unable to open file!");
+
+            
+          
+            //* default template content
+            $layout_content = "";
+            fwrite($layout, $layout_content);//saving template content to the blog new file
+         
+
+            //ANCHOR Save
+            $this->Themes->theme_post($input); 
+           	
+            $this->response(['theme page created successfully.'], REST_Controller::HTTP_OK);
+        }else{
+            $this->response(['theme page already exsist.'], REST_Controller::HTTP_BAD_REQUEST);//!alert if folder is already exsisted.
+        }
+ 
+    } 
+
+    public function theme_put()
+    {
+        //$this->check_session();
+        $params = $_REQUEST;
+        if(isset($params['theme_id'])){
+            $theme_id = $_GET['theme_id'];
+            
+            $input = $this->put();
+            //*log for updating
+            $input ['user_modified'] = $this->shop_info['user_id'];
+            $input ['date_modified'] = date("y-m-d H:i:s");
+             //ANCHOR Update
+            $this->Themes->theme_put($input,$theme_id); 
+           
+            $this->response(['theme updated successfully.'], REST_Controller::HTTP_OK);
+
+        }else{
+            $this->response(["Missing required parameter theme_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not upsell_id is not set.
+        }
+    }
+
+    public function theme_delete()
+    {
+        $params = $_REQUEST;
+        if(isset($params['theme_id'])){
+            $theme_id= $_GET['theme_id'];
+            //* Checking if the upsell_id is listed
+            $themes = $this->Themes->theme_get($theme_id); 
+            if(count($themes) > 0){
+                //* Deleting files and folder
+                foreach ($themes as $theme){   
+                    delete_files('assets/saved-files/theme/store/'.$theme->store_id.'/'.$theme->theme_slug.'/', TRUE);
+                    rmdir('assets/saved-files/theme/store/'.$theme->store_id.'/'.$theme->theme_slug.'/');
+                }
+                //ANCHOR Delete
+                $this->Themes->theme_delete($theme_id);    
+  
+                $this->response(['Theme deleted successfully.'], REST_Controller::HTTP_OK);
+            }else {
+                $this->response(["Missing required parameter theme_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not upsell_id found on the database.
+            }
+        }
+        else{
+            $this->response(["Missing required parameter theme_id"], REST_Controller::HTTP_BAD_REQUEST);//!alert if not upsell_id is not set.
+        }
+    }  
 }
